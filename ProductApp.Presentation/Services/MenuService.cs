@@ -115,6 +115,8 @@ public class MenuServices(IProductService productService, IFileService fileServi
         if (string.IsNullOrWhiteSpace(content))
         {
             Console.WriteLine("No products found...)");
+            Console.ReadKey();
+            return;
         }
 
 
