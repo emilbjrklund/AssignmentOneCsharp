@@ -26,7 +26,7 @@ public class MenuServices(IProductService productService, IFileService fileServi
             Console.WriteLine("\n 1. Add New Product ");
             Console.WriteLine("\n 2. List All Products ");
             Console.WriteLine("\n 3. Save Products To File ");
-            Console.WriteLine("\n 4. Get Products From File ");
+            Console.WriteLine("\n 4. Import Products From File ");
             Console.WriteLine("\n Q. Quit Menu ");
             Console.Write("\n Choose Option: ");
 
@@ -82,7 +82,6 @@ public class MenuServices(IProductService productService, IFileService fileServi
 
     public void ListAllOption()
     {
-        Console.Clear();
         var allProducts = _productService.GetProducts().ToList();
 
         if (allProducts.Count == 0)
@@ -91,10 +90,10 @@ public class MenuServices(IProductService productService, IFileService fileServi
         }
         foreach (var product in allProducts)
         {
-            Console.WriteLine($"{product.ProductName} {product.ProductPrice}kr {product.ProductId}");
-            Console.ReadKey();
-            return;
+            Console.WriteLine($" {product.ProductName} \t{product.ProductPrice}kr \t{product.ProductId}");
+
         }
+        Console.ReadKey();
 
     }
 
@@ -108,4 +107,17 @@ public class MenuServices(IProductService productService, IFileService fileServi
 
     }
 
+    public void ImportFromFileOption()
+    {
+        Console.Clear();
+
+        var content = _fileService.GetContentFromFile();
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            Console.WriteLine("No products found...)");
+        }
+
+
+
+    }
 }
