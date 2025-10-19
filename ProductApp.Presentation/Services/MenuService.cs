@@ -1,4 +1,6 @@
-﻿using ProductApp.Infrastructure.Interfaces;
+﻿using Microsoft.Extensions.Options;
+using ProductApp.Infrastructure.Interfaces;
+using ProductApp.Infrastructure.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +15,10 @@ public class MenuServices(IProductService productService, IFileService fileServi
     private readonly IProductService _productService = productService;
     private readonly IFileService _fileService = fileService;
 
-    private readonly JsonSerializerOptions _serializerOptions = new() { WriteIndented = true };
+    private readonly JsonSerializerOptions _serializerOptions = new()
+    {
+        WriteIndented = true
+    };
 
     public void DisplayMainMenu()
     {
@@ -31,6 +36,7 @@ public class MenuServices(IProductService productService, IFileService fileServi
             Console.Write("\n Choose Option: ");
 
             var option = Console.ReadLine().ToUpperInvariant();
+
             switch (option)
             {
                 case "1":
@@ -46,23 +52,26 @@ public class MenuServices(IProductService productService, IFileService fileServi
                     break;
 
                 case "4":
+                    ImportFromFileOption();
                     break;
 
                 case "Q":
+                    running = false;
                     break;
 
                 default:
                     break;
             }
-
         }
     }
 
     public void AddProductOption()
     {
         Console.Clear();
+
         Console.Write("\nName: ");
         var name = Console.ReadLine();
+
         if (string.IsNullOrWhiteSpace(name))
         {
             Console.WriteLine("Error, Product name is required");
@@ -77,49 +86,74 @@ public class MenuServices(IProductService productService, IFileService fileServi
         }
 
         _productService.AddProductToList(name, price);
-        Console.WriteLine("Added Product To List");
+        Console.WriteLine("\nProduct Added.");
+        Console.ReadKey();
     }
 
     public void ListAllOption()
     {
         var allProducts = _productService.GetProducts().ToList();
 
+        Console.Clear();
+
         if (allProducts.Count == 0)
         {
             Console.WriteLine("No Products Found:");
         }
+
         foreach (var product in allProducts)
         {
             Console.WriteLine($" {product.ProductName} \t{product.ProductPrice}kr \t{product.ProductId}");
-
         }
-        Console.ReadKey();
 
+        Console.ReadKey();
     }
 
     public void SaveToJsonFileOption()
     {
         var products = _productService.GetProducts();
-
         var json = JsonSerializer.Serialize(products);
-
         _fileService.SaveToFile(json);
-
     }
 
     public void ImportFromFileOption()
     {
         Console.Clear();
 
-        var content = _fileService.GetContentFromFile();
-        if (string.IsNullOrWhiteSpace(content))
+        try
         {
-            Console.WriteLine("No products found...)");
-            Console.ReadKey();
-            return;
+            var content = _fileService.GetContentFromFile();
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                Console.WriteLine("No products found in file.");
+                Console.ReadKey();
+                return;
+            }
+
+            var loadedProducts = JsonSerializer.Deserialize<List<Product>>(content, _serializerOptions) ?? new List<Product>();
+
+            if (loadedProducts.Count == 0)
+            {
+                Console.WriteLine("File contained no products.");
+                Console.ReadKey();
+                return;
+            }
+
+            foreach (var product in loadedProducts)
+            {
+                _productService.AddProductToList(product.ProductName, product.ProductPrice);
+            }
+
+            Console.WriteLine($"Imported {loadedProducts.Count} products.");
         }
 
 
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Import failed: {ex.Message}");
+        }
 
+        Console.ReadKey();
     }
 }
